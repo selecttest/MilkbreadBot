@@ -480,40 +480,24 @@ const commandHandlers = {
       // 使用缺角符號來強制對齊
       const output = `# ${school === '全部' ? '全部角色' : school + '角色'}一覽\n\n`;
       let tableOutput = '```\n';
-      tableOutput += '推出時間      角色-造型            稱號\n';
+      tableOutput += '推出時間      稱號      角色-造型\n';
       tableOutput += '----------------------------------------\n';
       
       charactersInfo.forEach(char => {
         // 使用固定寬度來確保對齊
         const date = char.releaseDate;
-        const charStyle = `${char.style}-${char.name}`;
+        const charStyle = `${char.name}-${char.style}`;
         const title = char.title;
         
         // 使用空格填充來保證對齊 - 直接用固定長度的字串
         let line = date.padEnd(14);  // 日期欄位固定14字元
         
-        // 角色-造型欄位 - 寬度根據內容動態調整
-        let charStyleFormatted = charStyle;
+        // 稱號欄位固定寬度 (假設稱號都是兩個中文字符)
+        let titleFormatted = title.padEnd(8); // 為兩個中文字符添加適當空格
+        line += titleFormatted;
         
-        // 根據字元數計算所需空格 (中文字元算2個寬度，英文字元算1個)
-        const getVisualLength = (str) => {
-          let length = 0;
-          for (let i = 0; i < str.length; i++) {
-            length += str.charCodeAt(i) > 255 ? 2 : 1;
-          }
-          return length;
-        };
-        
-        const charStyleLength = getVisualLength(charStyle);
-        // 我們希望角色-造型欄位的視覺寬度為25
-        const paddingNeeded = 25 - charStyleLength;
-        
-        if (paddingNeeded > 0) {
-          charStyleFormatted += ' '.repeat(paddingNeeded);
-        }
-        
-        line += charStyleFormatted;
-        line += title;
+        // 角色-造型欄位
+        line += charStyle;
         
         tableOutput += line + '\n';
       });
@@ -525,7 +509,7 @@ const commandHandlers = {
         const chunks = [];
         let currentChunk = output;
         currentChunk += '```\n';
-        currentChunk += '推出時間      角色-造型            稱號\n';
+        currentChunk += '推出時間      稱號      角色-造型\n';
         currentChunk += '----------------------------------------\n';
         
         let counter = 0;
@@ -533,29 +517,13 @@ const commandHandlers = {
         
         charactersInfo.forEach(char => {
           const date = char.releaseDate;
-          const charStyle = `${char.style}-${char.name}`;
+          const charStyle = `${char.name}-${char.style}`;
           const title = char.title;
           
           let line = date.padEnd(14);
-          
-          let charStyleFormatted = charStyle;
-          const getVisualLength = (str) => {
-            let length = 0;
-            for (let i = 0; i < str.length; i++) {
-              length += str.charCodeAt(i) > 255 ? 2 : 1;
-            }
-            return length;
-          };
-          
-          const charStyleLength = getVisualLength(charStyle);
-          const paddingNeeded = 25 - charStyleLength;
-          
-          if (paddingNeeded > 0) {
-            charStyleFormatted += ' '.repeat(paddingNeeded);
-          }
-          
-          line += charStyleFormatted;
-          line += title;
+          let titleFormatted = title.padEnd(8);
+          line += titleFormatted;
+          line += charStyle;
           
           counter++;
           if (counter > linesPerChunk && chunks.length < Math.ceil(charactersInfo.length / linesPerChunk) - 1) {
@@ -566,7 +534,7 @@ const commandHandlers = {
             
             currentChunk = `# ${school === '全部' ? '全部角色' : school + '角色'}一覽 (${chunks.length + 1}/${Math.ceil(charactersInfo.length / linesPerChunk)})\n\n`;
             currentChunk += '```\n';
-            currentChunk += '推出時間      角色-造型            稱號\n';
+            currentChunk += '推出時間      稱號      角色-造型\n';
             currentChunk += '----------------------------------------\n';
           } else {
             currentChunk += line + '\n';
