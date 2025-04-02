@@ -1,7 +1,6 @@
 require('dotenv').config();
 const fs = require('fs');
 const express = require('express');
-const fetch = require('node-fetch');
 const { 
   Client, 
   GatewayIntentBits, 
@@ -31,10 +30,13 @@ app.listen(port, () => console.log(`🌐 伺服器已啟動，運行於連接埠
 
 // Self ping to prevent Render from sleeping
 const pingInterval = 5 * 60 * 1000; // 5 minutes
-const keepAlive = () => {
-  fetch(selfURL)
-    .then(() => console.log(`🔁 成功 Ping 自己的網址 ${selfURL}`))
-    .catch(err => console.error('⚠️ 自動 Ping 失敗:', err));
+const keepAlive = async () => {
+  try {
+    const response = await fetch(selfURL);
+    console.log(`🔁 成功 Ping 自己的網址 ${selfURL}`);
+  } catch (err) {
+    console.error('⚠️ 自動 Ping 失敗:', err);
+  }
 };
 
 setInterval(keepAlive, pingInterval);
