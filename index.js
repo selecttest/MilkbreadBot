@@ -124,8 +124,16 @@ client.on('interactionCreate', async (interaction) => {
       else if (focusedOption.name === '造型') {
         // 提供造型選項 (基於選定的角色)
         const selectedName = interaction.options.getString('名字');
-        if (selectedName && charactersData[selectedName]) {
-          choices = charactersData[selectedName].造型.map(style => ({ name: style, value: style }));
+        
+        if (selectedName) {
+          // 檢查是否存在角色資料
+          if (charactersData[selectedName] && charactersData[selectedName].造型 && charactersData[selectedName].造型.length > 0) {
+            // 使用現有的造型列表
+            choices = charactersData[selectedName].造型.map(style => ({ name: style, value: style }));
+          } else {
+            // 如果沒有造型資料，提供「普通」作為選項
+            choices = [{ name: "普通", value: "普通" }];
+          }
         }
       }
       
@@ -216,7 +224,7 @@ const commandHandlers = {
     try {
       const school = interaction.options.getString('學校');
       const name = interaction.options.getString('名字');
-      const style = interaction.options.getString('造型');
+      let style = interaction.options.getString('造型');
       
       // 檢查學校是否存在
       if (!schoolsData[school]) {
@@ -230,12 +238,60 @@ const commandHandlers = {
       
       // 檢查角色資料是否存在
       if (!charactersData[name]) {
-        return await interaction.reply(`❌ 找不到角色「${name}」的資料。`);
+        // 如果該角色沒有資料，創建默認的「普通」造型資料
+        charactersData[name] = {
+          "學校": school,
+          "造型": ["普通"],
+          "資料": {
+            "普通": {
+              "推出時間": "未知",
+              "稱號": "未知",
+              "描述": `${name} 普通造型`,
+              "顏色": "#3498db"
+            }
+          }
+        };
+        
+        // 強制使用普通造型
+        style = "普通";
       }
       
-      // 檢查造型是否存在
+      // 如果角色沒有造型列表或造型列表為空，添加「普通」造型
+      if (!charactersData[name].造型 || charactersData[name].造型.length === 0) {
+        charactersData[name].造型 = ["普通"];
+        
+        // 添加普通造型資料
+        if (!charactersData[name].資料) {
+          charactersData[name].資料 = {};
+        }
+        
+        charactersData[name].資料["普通"] = {
+          "推出時間": "未知",
+          "稱號": "未知",
+          "描述": `${name} 普通造型`,
+          "顏色": "#3498db"
+        };
+        
+        // 強制使用普通造型
+        style = "普通";
+      }
+      
+      // 檢查造型是否存在，如果不存在，使用普通造型
       if (!charactersData[name].造型.includes(style)) {
-        return await interaction.reply(`❌ 找不到「${name}」的「${style}」造型。`);
+        // 如果指定的造型不存在，但有「普通」造型
+        if (charactersData[name].造型.includes("普通")) {
+          style = "普通";
+        } else {
+          // 如果連普通造型都沒有，添加它
+          charactersData[name].造型.push("普通");
+          charactersData[name].資料["普通"] = {
+            "推出時間": "未知",
+            "稱號": "未知",
+            "描述": `${name} 普通造型`,
+            "顏色": "#3498db"
+          };
+          style = "普通";
+        }
       }
       
       // 獲取角色造型資料
