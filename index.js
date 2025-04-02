@@ -509,7 +509,7 @@ const commandHandlers = {
         const chunks = [];
         let currentChunk = output;
         currentChunk += '```\n';
-        currentChunk += '推出時間       稱號      角色-造型\n';
+        currentChunk += '推出時間         稱號      角色-造型\n';
         currentChunk += '----------------------------------------\n';
         
         let counter = 0;
@@ -534,7 +534,7 @@ const commandHandlers = {
             
             currentChunk = `# ${school === '全部' ? '全部角色' : school + '角色'}一覽 (${chunks.length + 1}/${Math.ceil(charactersInfo.length / linesPerChunk)})\n\n`;
             currentChunk += '```\n';
-            currentChunk += '推出時間       稱號      角色-造型\n';
+            currentChunk += '推出時間         稱號      角色-造型\n';
             currentChunk += '----------------------------------------\n';
           } else {
             currentChunk += line + '\n';
