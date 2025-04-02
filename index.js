@@ -480,14 +480,29 @@ const commandHandlers = {
       // 構建輸出 - 使用更好的對齊格式
       let output = `# ${school === '全部' ? '全部角色' : school + '角色'}一覽\n\n`;
       output += '```\n'; // 使用代碼塊來保持格式
-      output += '推出時間     角色-造型        稱號\n';
+      output += '推出時間      角色-造型                稱號\n';
       output += '----------------------------------------\n';
       
+      // 尋找最長的角色-造型字符串
+      let maxCharStyleLength = 0;
       charactersInfo.forEach(char => {
-        // 確保每個欄位都有固定寬度
-        const dateField = char.releaseDate.padEnd(12);
-        const charStyleField = `${char.name}-${char.style}`.padEnd(14);
-        output += `${dateField} ${charStyleField} ${char.title}\n`;
+        const charStyleStr = `${char.name}-${char.style}`;
+        if (charStyleStr.length > maxCharStyleLength) {
+          maxCharStyleLength = charStyleStr.length;
+        }
+      });
+      
+      // 為每個稱號添加固定空格，確保對齊
+      charactersInfo.forEach(char => {
+        const dateField = char.releaseDate.padEnd(13); // 日期欄位寬度
+        
+        // 根據角色-造型的實際寬度動態調整填充
+        const charStyleStr = `${char.name}-${char.style}`;
+        // 中文字符通常是英文的2倍寬，所以需要額外考慮
+        const paddingLength = maxCharStyleLength + (20 - maxCharStyleLength);
+        const charStyleField = charStyleStr.padEnd(paddingLength);
+        
+        output += `${dateField}${charStyleField}${char.title}\n`;
       });
       
       output += '```';
@@ -497,16 +512,19 @@ const commandHandlers = {
         const chunks = [];
         let currentChunk = `# ${school === '全部' ? '全部角色' : school + '角色'}一覽 (1/${Math.ceil((charactersInfo.length * 30) / 1900)})\n\n`;
         currentChunk += '```\n';
-        currentChunk += '推出時間     角色-造型        稱號\n';
+        currentChunk += '推出時間      角色-造型                稱號\n';
         currentChunk += '----------------------------------------\n';
         
         let counter = 0;
         const chunkSize = Math.ceil(charactersInfo.length / Math.ceil((charactersInfo.length * 30) / 1900));
         
         charactersInfo.forEach(char => {
-          const dateField = char.releaseDate.padEnd(12);
-          const charStyleField = `${char.name}-${char.style}`.padEnd(14);
-          const line = `${dateField} ${charStyleField} ${char.title}\n`;
+          const dateField = char.releaseDate.padEnd(13);
+          const charStyleStr = `${char.name}-${char.style}`;
+          const paddingLength = maxCharStyleLength + (20 - maxCharStyleLength);
+          const charStyleField = charStyleStr.padEnd(paddingLength);
+          
+          const line = `${dateField}${charStyleField}${char.title}\n`;
           
           counter++;
           if (counter > chunkSize && chunks.length < Math.ceil((charactersInfo.length * 30) / 1900) - 1) {
@@ -515,7 +533,7 @@ const commandHandlers = {
             counter = 1;
             currentChunk = `# ${school === '全部' ? '全部角色' : school + '角色'}一覽 (${chunks.length + 1}/${Math.ceil((charactersInfo.length * 30) / 1900)})\n\n`;
             currentChunk += '```\n';
-            currentChunk += '推出時間     角色-造型        稱號\n';
+            currentChunk += '推出時間      角色-造型                稱號\n';
             currentChunk += '----------------------------------------\n';
           }
           
