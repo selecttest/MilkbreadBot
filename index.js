@@ -23,6 +23,16 @@ const attributeData = JSON.parse(fs.readFileSync('coach_attributes.json', 'utf8'
 const schoolsData = JSON.parse(fs.readFileSync('schools.json', 'utf8'));
 const charactersData = JSON.parse(fs.readFileSync('characters.json', 'utf8'));
 
+// 載入角色技能資料
+let characterSkillsData = {};
+try {
+  characterSkillsData = JSON.parse(fs.readFileSync('character_skills.json', 'utf8'));
+  console.log('✅ 角色技能資料載入成功');
+} catch (error) {
+  console.log('⚠️ 角色技能資料不存在，將使用空資料');
+  characterSkillsData = {};
+}
+
 // Setup Express server to keep the bot alive
 const app = express();
 app.get('/', (req, res) => res.send('機器人運行中！'));
@@ -93,6 +103,15 @@ const commands = [
         .setDescription('選擇角色造型')
         .setRequired(true)
         .setAutocomplete(true)
+    ),
+  new SlashCommandBuilder()
+    .setName('一覽')
+    .setDescription('顯示全部角色一覽')
+    .addStringOption(option =>
+      option.setName('學校')
+        .setDescription('選擇學校 (全部角色請選全部)')
+        .setRequired(true)
+        .setAutocomplete(true)
     )
 ].map(command => command.toJSON());
 
@@ -135,6 +154,31 @@ client.on('interactionCreate', async (interaction) => {
             choices = [{ name: "普通", value: "普通" }];
           }
         }
+      }
+      
+      // 過濾選項以符合用戶輸入
+      const filtered = choices.filter(choice => 
+        choice.name.toLowerCase().includes(focusedOption.value.toLowerCase())
+      );
+      
+      // 回傳最多 25 個選項
+      await interaction.respond(filtered.slice(0, 25)).catch(error => {
+        // 忽略 "互動已被確認" 錯誤
+        if (error.code !== 40060) {
+          console.error(`❌ 自動完成回應錯誤:`, error);
+        }
+      });
+    }
+    else if (interaction.commandName === '一覽') {
+      const focusedOption = interaction.options.getFocused(true);
+      let choices = [];
+      
+      if (focusedOption.name === '學校') {
+        // 提供學校選項，加上「全部」選項
+        choices = [
+          { name: "全部", value: "全部" },
+          ...Object.keys(schoolsData).map(school => ({ name: school, value: school }))
+        ];
       }
       
       // 過濾選項以符合用戶輸入
@@ -297,6 +341,26 @@ const commandHandlers = {
       // 獲取角色造型資料
       const styleData = charactersData[name].資料[style];
       
+      // 查找技能資料
+      let skillInfo = "";
+
+      // 檢查是否存在技能資料
+      if (characterSkillsData && characterSkillsData[name] && characterSkillsData[name][style]) {
+        // 存在指定角色和造型的技能資料
+        const skills = characterSkillsData[name][style];
+        
+        skillInfo += skills.特色 ? `\n**特色**：${skills.特色}` : '\n**特色**：未知';
+        skillInfo += skills.技能 ? `\n**技能**：${skills.技能}` : '\n**技能**：未知';
+        skillInfo += skills.彩技 ? `\n**彩技**：${skills.彩技}` : '\n**彩技**：未知';
+        skillInfo += skills.聯動 ? `\n**聯動**：${skills.聯動}` : '\n**聯動**：未知';
+      } else {
+        // 不存在指定角色和造型的技能資料，全部顯示未知
+        skillInfo += '\n**特色**：未知';
+        skillInfo += '\n**技能**：未知';
+        skillInfo += '\n**彩技**：未知';
+        skillInfo += '\n**聯動**：未知';
+      }
+      
       // 獲取角色對應的顏色
       const colorHex = styleData.顏色 || '#3498db';
       const colorDec = parseInt(colorHex.replace('#', ''), 16);
@@ -305,7 +369,7 @@ const commandHandlers = {
       const embed = {
         color: colorDec,
         title: `${name} - ${style}`,
-        description: `${name}一 ${style}造型\n\n**推出時間**    **稱號**\n${styleData.推出時間}    ${styleData.稱號}${styleData.備註 ? '\n\n*' + styleData.備註 + '*' : ''}`
+        description: `${name}一 ${style}造型\n\n**推出時間**    **稱號**\n${styleData.推出時間}    ${styleData.稱號}${styleData.備註 ? '\n\n*' + styleData.備註 + '*' : ''}${skillInfo}`
       };
       
       // 使用embed回應，這會創建左側帶有顏色條的訊息
@@ -353,6 +417,101 @@ const commandHandlers = {
       });
     } catch (error) {
       console.error(`❌ 查教練指令錯誤:`, error);
+      if (error.code !== 10062) {
+        await interaction.followUp({ 
+          content: '❌ 指令執行發生錯誤，請稍後再試。', 
+          ephemeral: true 
+        }).catch(() => {});
+      }
+    }
+  },
+  
+  '一覽': async (interaction) => {
+    try {
+      const school = interaction.options.getString('學校');
+      
+      // 獲取角色清單
+      let targetCharacters = [];
+      if (school === '全部') {
+        // 全部學校的角色
+        Object.keys(schoolsData).forEach(schoolName => {
+          targetCharacters = [...targetCharacters, ...schoolsData[schoolName]];
+        });
+      } else if (schoolsData[school]) {
+        // 特定學校的角色
+        targetCharacters = schoolsData[school];
+      } else {
+        return await interaction.reply(`❌ 找不到學校「${school}」。`);
+      }
+      
+      // 整理角色資料
+      const charactersInfo = [];
+      
+      targetCharacters.forEach(name => {
+        if (charactersData[name]) {
+          charactersData[name].造型.forEach(style => {
+            const styleData = charactersData[name].資料[style];
+            if (styleData) {
+              charactersInfo.push({
+                name,
+                style,
+                releaseDate: styleData.推出時間 || '未知',
+                title: styleData.稱號 || '未知'
+              });
+            }
+          });
+        }
+      });
+      
+      // 按推出時間排序
+      charactersInfo.sort((a, b) => {
+        // 處理特殊日期 (FREE, 未知等)
+        if (!a.releaseDate.match(/\d{4}\.\d{2}/) && b.releaseDate.match(/\d{4}\.\d{2}/)) return 1;
+        if (a.releaseDate.match(/\d{4}\.\d{2}/) && !b.releaseDate.match(/\d{4}\.\d{2}/)) return -1;
+        if (!a.releaseDate.match(/\d{4}\.\d{2}/) && !b.releaseDate.match(/\d{4}\.\d{2}/)) return 0;
+        
+        // 正常日期比較
+        return a.releaseDate.localeCompare(b.releaseDate);
+      });
+      
+      // 構建輸出
+      let output = `# ${school === '全部' ? '全部角色' : school + '角色'}一覽\n\n`;
+      output += '**推出時間**  **角色-造型**  **稱號**\n';
+      
+      charactersInfo.forEach(char => {
+        output += `${char.releaseDate.padEnd(10)}  ${char.name}-${char.style.padEnd(6)}  ${char.title}\n`;
+      });
+      
+      // 如果輸出太長，分段回應
+      if (output.length > 2000) {
+        const chunks = [];
+        let currentChunk = `# ${school === '全部' ? '全部角色' : school + '角色'}一覽 (1/${Math.ceil(output.length / 1900)})\n\n`;
+        currentChunk += '**推出時間**  **角色-造型**  **稱號**\n';
+        
+        charactersInfo.forEach(char => {
+          const line = `${char.releaseDate.padEnd(10)}  ${char.name}-${char.style.padEnd(6)}  ${char.title}\n`;
+          if (currentChunk.length + line.length > 1900) {
+            chunks.push(currentChunk);
+            currentChunk = `# ${school === '全部' ? '全部角色' : school + '角色'}一覽 (${chunks.length + 1}/${Math.ceil(output.length / 1900)})\n\n`;
+            currentChunk += '**推出時間**  **角色-造型**  **稱號**\n';
+          }
+          currentChunk += line;
+        });
+        
+        if (currentChunk) chunks.push(currentChunk);
+        
+        // 先回應第一個部分
+        await interaction.reply(chunks[0]);
+        
+        // 再使用 followUp 回應其餘部分
+        for (let i = 1; i < chunks.length; i++) {
+          await interaction.followUp(chunks[i]);
+        }
+      } else {
+        await interaction.reply(output);
+      }
+    } catch (error) {
+      console.error(`❌ 一覽指令錯誤:`, error);
       if (error.code !== 10062) {
         await interaction.followUp({ 
           content: '❌ 指令執行發生錯誤，請稍後再試。', 
