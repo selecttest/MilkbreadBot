@@ -477,71 +477,107 @@ const commandHandlers = {
         return a.releaseDate.localeCompare(b.releaseDate);
       });
       
-      // 構建輸出 - 使用更好的對齊格式
-      let output = `# ${school === '全部' ? '全部角色' : school + '角色'}一覽\n\n`;
-      output += '```\n'; // 使用代碼塊來保持格式
-      output += '推出時間      角色-造型                稱號\n';
-      output += '----------------------------------------\n';
+      // 使用缺角符號來強制對齊
+      const output = `# ${school === '全部' ? '全部角色' : school + '角色'}一覽\n\n`;
+      let tableOutput = '```\n';
+      tableOutput += '推出時間      角色-造型            稱號\n';
+      tableOutput += '----------------------------------------\n';
       
-      // 尋找最長的角色-造型字符串
-      let maxCharStyleLength = 0;
       charactersInfo.forEach(char => {
-        const charStyleStr = `${char.name}-${char.style}`;
-        if (charStyleStr.length > maxCharStyleLength) {
-          maxCharStyleLength = charStyleStr.length;
+        // 使用固定寬度來確保對齊
+        const date = char.releaseDate;
+        const charStyle = `${char.name}-${char.style}`;
+        const title = char.title;
+        
+        // 使用空格填充來保證對齊 - 直接用固定長度的字串
+        let line = date.padEnd(14);  // 日期欄位固定14字元
+        
+        // 角色-造型欄位 - 寬度根據內容動態調整
+        let charStyleFormatted = charStyle;
+        
+        // 根據字元數計算所需空格 (中文字元算2個寬度，英文字元算1個)
+        const getVisualLength = (str) => {
+          let length = 0;
+          for (let i = 0; i < str.length; i++) {
+            length += str.charCodeAt(i) > 255 ? 2 : 1;
+          }
+          return length;
+        };
+        
+        const charStyleLength = getVisualLength(charStyle);
+        // 我們希望角色-造型欄位的視覺寬度為25
+        const paddingNeeded = 25 - charStyleLength;
+        
+        if (paddingNeeded > 0) {
+          charStyleFormatted += ' '.repeat(paddingNeeded);
         }
+        
+        line += charStyleFormatted;
+        line += title;
+        
+        tableOutput += line + '\n';
       });
       
-      // 為每個稱號添加固定空格，確保對齊
-      charactersInfo.forEach(char => {
-        const dateField = char.releaseDate.padEnd(13); // 日期欄位寬度
-        
-        // 根據角色-造型的實際寬度動態調整填充
-        const charStyleStr = `${char.name}-${char.style}`;
-        // 中文字符通常是英文的2倍寬，所以需要額外考慮
-        const paddingLength = maxCharStyleLength + (20 - maxCharStyleLength);
-        const charStyleField = charStyleStr.padEnd(paddingLength);
-        
-        output += `${dateField}${charStyleField}${char.title}\n`;
-      });
-      
-      output += '```';
+      tableOutput += '```';
       
       // 如果輸出太長，分段回應
-      if (output.length > 2000) {
+      if (tableOutput.length > 1900) {
         const chunks = [];
-        let currentChunk = `# ${school === '全部' ? '全部角色' : school + '角色'}一覽 (1/${Math.ceil((charactersInfo.length * 30) / 1900)})\n\n`;
+        let currentChunk = output;
         currentChunk += '```\n';
-        currentChunk += '推出時間      角色-造型                稱號\n';
+        currentChunk += '推出時間      角色-造型            稱號\n';
         currentChunk += '----------------------------------------\n';
         
         let counter = 0;
-        const chunkSize = Math.ceil(charactersInfo.length / Math.ceil((charactersInfo.length * 30) / 1900));
+        const linesPerChunk = 20; // 每個分段約20行
         
         charactersInfo.forEach(char => {
-          const dateField = char.releaseDate.padEnd(13);
-          const charStyleStr = `${char.name}-${char.style}`;
-          const paddingLength = maxCharStyleLength + (20 - maxCharStyleLength);
-          const charStyleField = charStyleStr.padEnd(paddingLength);
+          const date = char.releaseDate;
+          const charStyle = `${char.name}-${char.style}`;
+          const title = char.title;
           
-          const line = `${dateField}${charStyleField}${char.title}\n`;
+          let line = date.padEnd(14);
           
-          counter++;
-          if (counter > chunkSize && chunks.length < Math.ceil((charactersInfo.length * 30) / 1900) - 1) {
-            currentChunk += '```';
-            chunks.push(currentChunk);
-            counter = 1;
-            currentChunk = `# ${school === '全部' ? '全部角色' : school + '角色'}一覽 (${chunks.length + 1}/${Math.ceil((charactersInfo.length * 30) / 1900)})\n\n`;
-            currentChunk += '```\n';
-            currentChunk += '推出時間      角色-造型                稱號\n';
-            currentChunk += '----------------------------------------\n';
+          let charStyleFormatted = charStyle;
+          const getVisualLength = (str) => {
+            let length = 0;
+            for (let i = 0; i < str.length; i++) {
+              length += str.charCodeAt(i) > 255 ? 2 : 1;
+            }
+            return length;
+          };
+          
+          const charStyleLength = getVisualLength(charStyle);
+          const paddingNeeded = 25 - charStyleLength;
+          
+          if (paddingNeeded > 0) {
+            charStyleFormatted += ' '.repeat(paddingNeeded);
           }
           
-          currentChunk += line;
+          line += charStyleFormatted;
+          line += title;
+          
+          counter++;
+          if (counter > linesPerChunk && chunks.length < Math.ceil(charactersInfo.length / linesPerChunk) - 1) {
+            currentChunk += line + '\n';
+            currentChunk += '```';
+            chunks.push(currentChunk);
+            counter = 0;
+            
+            currentChunk = `# ${school === '全部' ? '全部角色' : school + '角色'}一覽 (${chunks.length + 1}/${Math.ceil(charactersInfo.length / linesPerChunk)})\n\n`;
+            currentChunk += '```\n';
+            currentChunk += '推出時間      角色-造型            稱號\n';
+            currentChunk += '----------------------------------------\n';
+          } else {
+            currentChunk += line + '\n';
+          }
         });
         
         currentChunk += '```';
-        chunks.push(currentChunk);
+        
+        if (currentChunk !== '```') {
+          chunks.push(currentChunk);
+        }
         
         // 使用 editReply 回應第一個部分
         await interaction.editReply(chunks[0]);
@@ -551,7 +587,7 @@ const commandHandlers = {
           await interaction.followUp(chunks[i]);
         }
       } else {
-        await interaction.editReply(output);
+        await interaction.editReply(output + tableOutput);
       }
     } catch (error) {
       console.error(`❌ 一覽指令錯誤:`, error);
