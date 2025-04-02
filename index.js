@@ -211,21 +211,8 @@ const commandHandlers = {
     const colorHex = styleData.顏色 || '#3498db';
     const colorDec = parseInt(colorHex.replace('#', ''), 16);
     
-    // 建立嵌入訊息 - 新風格，類似圖片中的效果
-    const embed = {
-      color: colorDec,
-      title: `${name} - ${style}`,
-      description: `${name}一 ${style}造型`,
-      fields: [],
-      // 左側加入藍色條，使用自訂欄位和Unicode方塊字元
-      author: { 
-        name: '牛奶麵包機器人',
-        iconURL: 'attachment://bot_icon.png'
-      }
-    };
-    
     // 添加主要資訊
-    let content = `${interaction.user} 已使用 <:character:123456789> 角色\n\n`;
+    let content = `${interaction.user} 已使用 角色\n\n`;
     
     // 添加左側藍色條和內容 (使用Discord的格式)
     content += `${'```md\n# '}${name} - ${style}${'```'}\n`;
@@ -238,17 +225,8 @@ const commandHandlers = {
       content += `\n*${styleData.備註}*`;
     }
     
-    // 使用檔案+內容的方式回應，以實現自訂格式
-    await interaction.reply({ 
-      content: content,
-      files: [
-        // 你需要添加一個機器人圖標文件到你的專案中
-        { 
-          attachment: './bot_icon.png', 
-          name: 'bot_icon.png' 
-        }
-      ]
-    });
+    // 使用純文字回應，不需要圖標檔案
+    await interaction.reply({ content });
   },
   '查教練': async (interaction) => {
     const coachName = interaction.options.getString('名稱');
@@ -267,22 +245,14 @@ const commandHandlers = {
     const colorDec = parseInt(colorHex.replace('#', ''), 16);
     
     // 建立回應內容
-    let content = `${interaction.user} 已使用 <:coach:123456789> 教練\n\n`;
+    let content = `${interaction.user} 已使用 教練\n\n`;
     
     // 添加左側顏色條和內容 (使用Discord的格式)
     content += `${'```md\n# '}${coachName} - ${coach.學校}${'```'}\n`;
     content += `${coach.全名}（${coach.學校}）主${coach.屬性.主屬性}／副${coach.屬性.副屬性}\n`;
     
-    await interaction.reply({ 
-      content: content,
-      files: [
-        // 你需要添加一個機器人圖標文件到你的專案中
-        { 
-          attachment: './bot_icon.png', 
-          name: 'bot_icon.png' 
-        }
-      ]
-    });
+    // 使用純文字回應，不需要圖標檔案
+    await interaction.reply({ content });
   }
 };
 
