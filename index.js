@@ -486,7 +486,7 @@ const commandHandlers = {
       charactersInfo.forEach(char => {
         // 使用固定寬度來確保對齊
         const date = char.releaseDate;
-        const charStyle = `${char.name}-${char.style}`;
+        const charStyle = `${char.style}-${char.name}`;
         const title = char.title;
         
         // 使用空格填充來保證對齊 - 直接用固定長度的字串
@@ -533,7 +533,7 @@ const commandHandlers = {
         
         charactersInfo.forEach(char => {
           const date = char.releaseDate;
-          const charStyle = `${char.name}-${char.style}`;
+          const charStyle = `${char.style}-${char.name}`;
           const title = char.title;
           
           let line = date.padEnd(14);
