@@ -426,122 +426,136 @@ const commandHandlers = {
     }
   },
   
-'一覽': async (interaction) => {
-  try {
-    const school = interaction.options.getString('學校');
-    
-    // 獲取角色清單
-    let targetCharacters = [];
-    if (school === '全部') {
-      // 全部學校的角色
-      Object.keys(schoolsData).forEach(schoolName => {
-        targetCharacters = [...targetCharacters, ...schoolsData[schoolName]];
-      });
-    } else if (schoolsData[school]) {
-      // 特定學校的角色
-      targetCharacters = schoolsData[school];
-    } else {
-      return await interaction.reply(`❌ 找不到學校「${school}」。`);
-    }
-    
-    // 整理角色資料
-    const charactersInfo = [];
-    
-    targetCharacters.forEach(name => {
-      if (charactersData[name]) {
-        charactersData[name].造型.forEach(style => {
-          const styleData = charactersData[name].資料[style];
-          if (styleData) {
-            charactersInfo.push({
-              name,
-              style,
-              releaseDate: styleData.推出時間 || '未知',
-              title: styleData.稱號 || '未知'
-            });
-          }
+  '一覽': async (interaction) => {
+    try {
+      // 立即延遲回應，防止超時
+      await interaction.deferReply();
+      
+      const school = interaction.options.getString('學校');
+      
+      // 獲取角色清單
+      let targetCharacters = [];
+      if (school === '全部') {
+        // 全部學校的角色
+        Object.keys(schoolsData).forEach(schoolName => {
+          targetCharacters = [...targetCharacters, ...schoolsData[schoolName]];
         });
+      } else if (schoolsData[school]) {
+        // 特定學校的角色
+        targetCharacters = schoolsData[school];
+      } else {
+        return await interaction.editReply(`❌ 找不到學校「${school}」。`);
       }
-    });
-    
-    // 按推出時間排序
-    charactersInfo.sort((a, b) => {
-      // 處理特殊日期 (FREE, 未知等)
-      if (!a.releaseDate.match(/\d{4}\.\d{2}/) && b.releaseDate.match(/\d{4}\.\d{2}/)) return 1;
-      if (a.releaseDate.match(/\d{4}\.\d{2}/) && !b.releaseDate.match(/\d{4}\.\d{2}/)) return -1;
-      if (!a.releaseDate.match(/\d{4}\.\d{2}/) && !b.releaseDate.match(/\d{4}\.\d{2}/)) return 0;
       
-      // 正常日期比較
-      return a.releaseDate.localeCompare(b.releaseDate);
-    });
-    
-    // 構建輸出 - 使用更好的對齊格式
-    let output = `# ${school === '全部' ? '全部角色' : school + '角色'}一覽\n\n`;
-    output += '```\n'; // 使用代碼塊來保持格式
-    output += '推出時間     角色-造型         稱號\n';
-    output += '----------------------------------------\n';
-    
-    charactersInfo.forEach(char => {
-      // 確保每個欄位都有固定寬度
-      const dateField = char.releaseDate.padEnd(12);
-      const charStyleField = `${char.name}-${char.style}`.padEnd(15);
-      output += `${dateField} ${charStyleField} ${char.title}\n`;
-    });
-    
-    output += '```';
-    
-    // 如果輸出太長，分段回應
-    if (output.length > 2000) {
-      const chunks = [];
-      let currentChunk = `# ${school === '全部' ? '全部角色' : school + '角色'}一覽 (1/${Math.ceil((charactersInfo.length * 30) / 1900)})\n\n`;
-      currentChunk += '```\n';
-      currentChunk += '推出時間      角色-造型         稱號\n';
-      currentChunk += '----------------------------------------\n';
+      // 整理角色資料
+      const charactersInfo = [];
       
-      let counter = 0;
-      const chunkSize = Math.ceil(charactersInfo.length / Math.ceil((charactersInfo.length * 30) / 1900));
+      targetCharacters.forEach(name => {
+        if (charactersData[name]) {
+          charactersData[name].造型.forEach(style => {
+            const styleData = charactersData[name].資料[style];
+            if (styleData) {
+              charactersInfo.push({
+                name,
+                style,
+                releaseDate: styleData.推出時間 || '未知',
+                title: styleData.稱號 || '未知'
+              });
+            }
+          });
+        }
+      });
+      
+      // 按推出時間排序
+      charactersInfo.sort((a, b) => {
+        // 處理特殊日期 (FREE, 未知等)
+        if (!a.releaseDate.match(/\d{4}\.\d{2}/) && b.releaseDate.match(/\d{4}\.\d{2}/)) return 1;
+        if (a.releaseDate.match(/\d{4}\.\d{2}/) && !b.releaseDate.match(/\d{4}\.\d{2}/)) return -1;
+        if (!a.releaseDate.match(/\d{4}\.\d{2}/) && !b.releaseDate.match(/\d{4}\.\d{2}/)) return 0;
+        
+        // 正常日期比較
+        return a.releaseDate.localeCompare(b.releaseDate);
+      });
+      
+      // 構建輸出 - 使用更好的對齊格式
+      let output = `# ${school === '全部' ? '全部角色' : school + '角色'}一覽\n\n`;
+      output += '```\n'; // 使用代碼塊來保持格式
+      output += '推出時間     角色-造型        稱號\n';
+      output += '----------------------------------------\n';
       
       charactersInfo.forEach(char => {
+        // 確保每個欄位都有固定寬度
         const dateField = char.releaseDate.padEnd(12);
-        const charStyleField = `${char.name}-${char.style}`.padEnd(15);
-        const line = `${dateField} ${charStyleField} ${char.title}\n`;
-        
-        counter++;
-        if (counter > chunkSize && chunks.length < Math.ceil((charactersInfo.length * 30) / 1900) - 1) {
-          currentChunk += '```';
-          chunks.push(currentChunk);
-          counter = 1;
-          currentChunk = `# ${school === '全部' ? '全部角色' : school + '角色'}一覽 (${chunks.length + 1}/${Math.ceil((charactersInfo.length * 30) / 1900)})\n\n`;
-          currentChunk += '```\n';
-          currentChunk += '推出時間      角色-造型         稱號\n';
-          currentChunk += '----------------------------------------\n';
-        }
-        
-        currentChunk += line;
+        const charStyleField = `${char.name}-${char.style}`.padEnd(14);
+        output += `${dateField} ${charStyleField} ${char.title}\n`;
       });
       
-      currentChunk += '```';
-      chunks.push(currentChunk);
+      output += '```';
       
-      // 先回應第一個部分
-      await interaction.reply(chunks[0]);
-      
-      // 再使用 followUp 回應其餘部分
-      for (let i = 1; i < chunks.length; i++) {
-        await interaction.followUp(chunks[i]);
+      // 如果輸出太長，分段回應
+      if (output.length > 2000) {
+        const chunks = [];
+        let currentChunk = `# ${school === '全部' ? '全部角色' : school + '角色'}一覽 (1/${Math.ceil((charactersInfo.length * 30) / 1900)})\n\n`;
+        currentChunk += '```\n';
+        currentChunk += '推出時間     角色-造型        稱號\n';
+        currentChunk += '----------------------------------------\n';
+        
+        let counter = 0;
+        const chunkSize = Math.ceil(charactersInfo.length / Math.ceil((charactersInfo.length * 30) / 1900));
+        
+        charactersInfo.forEach(char => {
+          const dateField = char.releaseDate.padEnd(12);
+          const charStyleField = `${char.name}-${char.style}`.padEnd(14);
+          const line = `${dateField} ${charStyleField} ${char.title}\n`;
+          
+          counter++;
+          if (counter > chunkSize && chunks.length < Math.ceil((charactersInfo.length * 30) / 1900) - 1) {
+            currentChunk += '```';
+            chunks.push(currentChunk);
+            counter = 1;
+            currentChunk = `# ${school === '全部' ? '全部角色' : school + '角色'}一覽 (${chunks.length + 1}/${Math.ceil((charactersInfo.length * 30) / 1900)})\n\n`;
+            currentChunk += '```\n';
+            currentChunk += '推出時間     角色-造型        稱號\n';
+            currentChunk += '----------------------------------------\n';
+          }
+          
+          currentChunk += line;
+        });
+        
+        currentChunk += '```';
+        chunks.push(currentChunk);
+        
+        // 使用 editReply 回應第一個部分
+        await interaction.editReply(chunks[0]);
+        
+        // 再使用 followUp 回應其餘部分
+        for (let i = 1; i < chunks.length; i++) {
+          await interaction.followUp(chunks[i]);
+        }
+      } else {
+        await interaction.editReply(output);
       }
-    } else {
-      await interaction.reply(output);
-    }
-  } catch (error) {
-    console.error(`❌ 一覽指令錯誤:`, error);
-    if (error.code !== 10062) {
-      await interaction.followUp({ 
-        content: '❌ 指令執行發生錯誤，請稍後再試。', 
-        ephemeral: true 
-      }).catch(() => {});
+    } catch (error) {
+      console.error(`❌ 一覽指令錯誤:`, error);
+      if (error.code !== 10062) {
+        // 嘗試回應錯誤
+        try {
+          if (interaction.deferred) {
+            await interaction.editReply({
+              content: '❌ 指令執行發生錯誤，請稍後再試。',
+            });
+          } else {
+            await interaction.reply({
+              content: '❌ 指令執行發生錯誤，請稍後再試。',
+              ephemeral: true
+            });
+          }
+        } catch (e) {
+          console.error('❌ 無法向用戶回報錯誤:', e);
+        }
+      }
     }
   }
-}
 };
 
 // Register commands
