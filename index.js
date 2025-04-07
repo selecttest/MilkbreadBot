@@ -246,22 +246,36 @@ const commandHandlers = {
     }
   },
 
-  '三根毛': async (interaction) => {
-    try {
-      await interaction.reply({
-        content: '🎉黃金川派對🎇',
-        files: ['./threehairs.jpg']
-      });
-    } catch (error) {
-      console.error(`❌ 好多黃金川指令錯誤:`, error);
-      if (error.code !== 10062) {
-        await interaction.followUp({ 
-          content: '❌ 指令執行發生錯誤，請稍後再試。', 
-          ephemeral: true 
-        }).catch(() => {});
+'三根毛': async (interaction) => {
+  try {
+    // 立即延遲回應，防止超時
+    await interaction.deferReply();
+    
+    // 使用 editReply 而非 reply 來回應
+    await interaction.editReply({
+      content: '🎉黃金川派對🎇',
+      files: ['./threehairs.jpg']
+    });
+  } catch (error) {
+    console.error(`❌ 好多黃金川指令錯誤:`, error);
+    if (error.code !== 10062) {
+      try {
+        if (interaction.deferred) {
+          await interaction.editReply({
+            content: '❌ 指令執行發生錯誤，請稍後再試。'
+          });
+        } else {
+          await interaction.followUp({ 
+            content: '❌ 指令執行發生錯誤，請稍後再試。', 
+            ephemeral: true 
+          });
+        }
+      } catch (e) {
+        console.error('❌ 無法向用戶回報錯誤:', e);
       }
     }
-  },
+  }
+},
 
   
   '查詢': async (interaction) => {
