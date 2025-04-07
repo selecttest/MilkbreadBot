@@ -242,6 +242,24 @@ const commandHandlers = {
       }
     }
   },
+
+  '三根毛': async (interaction) => {
+    try {
+      await interaction.reply({
+        content: '🎉黃金川派對🎇',
+        files: ['./threehairs.jpg']
+      });
+    } catch (error) {
+      console.error(`❌ 好多黃金川指令錯誤:`, error);
+      if (error.code !== 10062) {
+        await interaction.followUp({ 
+          content: '❌ 指令執行發生錯誤，請稍後再試。', 
+          ephemeral: true 
+        }).catch(() => {});
+      }
+    }
+  },
+
   
   '查詢': async (interaction) => {
     try {
