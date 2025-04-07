@@ -56,6 +56,11 @@ const commands = [
   new SlashCommandBuilder()
     .setName('牛奶麵包')
     .setDescription('超好吃的岩泉牛奶麵包圖片'),
+
+  new SlashCommandBuilder()
+    .setName('三根毛')
+    .setDescription('到處都是黃金川！'),
+
   new SlashCommandBuilder()
     .setName('查詢')
     .setDescription('依屬性查詢教練')
