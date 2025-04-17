@@ -300,130 +300,151 @@ const commandHandlers = {
   },
   
   '角色': async (interaction) => {
-    try {
-      const school = interaction.options.getString('學校');
-      const name = interaction.options.getString('名字');
-      let style = interaction.options.getString('造型');
-      
-      // 檢查學校是否存在
-      if (!schoolsData[school]) {
-        return await interaction.reply(`❌ 找不到學校「${school}」。`);
-      }
-      
-      // 檢查該學校是否有此角色
-      if (!schoolsData[school].includes(name)) {
-        return await interaction.reply(`❌ 在「${school}」中找不到角色「${name}」。`);
-      }
-      
-      // 檢查角色資料是否存在
-      if (!charactersData[name]) {
-        // 如果該角色沒有資料，創建默認的「普通」造型資料
-        charactersData[name] = {
-          "學校": school,
-          "造型": ["普通"],
-          "資料": {
-            "普通": {
-              "推出時間": "未知",
-              "稱號": "未知",
-              "描述": `${name} 普通造型`,
-              "顏色": "#3498db"
-            }
+  try {
+    // Immediately defer the reply to prevent interaction timeout
+    await interaction.deferReply();
+    
+    const school = interaction.options.getString('學校');
+    const name = interaction.options.getString('名字');
+    let style = interaction.options.getString('造型');
+    
+    // 檢查學校是否存在
+    if (!schoolsData[school]) {
+      return await interaction.editReply(`❌ 找不到學校「${school}」。`);
+    }
+    
+    // 檢查該學校是否有此角色
+    if (!schoolsData[school].includes(name)) {
+      return await interaction.editReply(`❌ 在「${school}」中找不到角色「${name}」。`);
+    }
+    
+    // 檢查角色資料是否存在
+    if (!charactersData[name]) {
+      // 如果該角色沒有資料，創建默認的「普通」造型資料
+      charactersData[name] = {
+        "學校": school,
+        "造型": ["普通"],
+        "資料": {
+          "普通": {
+            "推出時間": "未知",
+            "稱號": "未知",
+            "描述": `${name} 普通造型`,
+            "顏色": "#3498db"
           }
-        };
-        
-        // 強制使用普通造型
-        style = "普通";
+        }
+      };
+      
+      // 強制使用普通造型
+      style = "普通";
+    }
+    
+    // 如果角色沒有造型列表或造型列表為空，添加「普通」造型
+    if (!charactersData[name].造型 || charactersData[name].造型.length === 0) {
+      charactersData[name].造型 = ["普通"];
+      
+      // 添加普通造型資料
+      if (!charactersData[name].資料) {
+        charactersData[name].資料 = {};
       }
       
-      // 如果角色沒有造型列表或造型列表為空，添加「普通」造型
-      if (!charactersData[name].造型 || charactersData[name].造型.length === 0) {
-        charactersData[name].造型 = ["普通"];
-        
-        // 添加普通造型資料
-        if (!charactersData[name].資料) {
-          charactersData[name].資料 = {};
-        }
-        
+      charactersData[name].資料["普通"] = {
+        "推出時間": "未知",
+        "稱號": "未知",
+        "描述": `${name} 普通造型`,
+        "顏色": "#3498db"
+      };
+      
+      // 強制使用普通造型
+      style = "普通";
+    }
+    
+    // 檢查造型是否存在，如果不存在，使用普通造型
+    if (!style || !charactersData[name].造型.includes(style)) {
+      // 如果指定的造型不存在，但有「普通」造型
+      if (charactersData[name].造型.includes("普通")) {
+        style = "普通";
+      } else {
+        // 如果連普通造型都沒有，添加它
+        charactersData[name].造型.push("普通");
         charactersData[name].資料["普通"] = {
           "推出時間": "未知",
           "稱號": "未知",
           "描述": `${name} 普通造型`,
           "顏色": "#3498db"
         };
-        
-        // 強制使用普通造型
         style = "普通";
       }
+    }
+    
+    // 獲取角色造型資料
+    const styleData = charactersData[name].資料[style];
+    
+    // 查找技能資料
+    let skillInfo = "";
+    
+    // 檢查是否存在技能資料
+    if (characterSkillsData && characterSkillsData[name] && characterSkillsData[name][style]) {
+      // 存在指定角色和造型的技能資料
+      const skills = characterSkillsData[name][style];
       
-      // 檢查造型是否存在，如果不存在，使用普通造型
-      if (!charactersData[name].造型.includes(style)) {
-        // 如果指定的造型不存在，但有「普通」造型
-        if (charactersData[name].造型.includes("普通")) {
-          style = "普通";
-        } else {
-          // 如果連普通造型都沒有，添加它
-          charactersData[name].造型.push("普通");
-          charactersData[name].資料["普通"] = {
-            "推出時間": "未知",
-            "稱號": "未知",
-            "描述": `${name} 普通造型`,
-            "顏色": "#3498db"
-          };
-          style = "普通";
-        }
-      }
-      
-      // 獲取角色造型資料
-      const styleData = charactersData[name].資料[style];
-      
-      // 查找技能資料
-      let skillInfo = "";
-
-      // 檢查是否存在技能資料
-      if (characterSkillsData && characterSkillsData[name] && characterSkillsData[name][style]) {
-        // 存在指定角色和造型的技能資料
-        const skills = characterSkillsData[name][style];
-        
-        skillInfo += skills.特色 ? `\n**特色**：${skills.特色}` : '\n**特色**：未知';
-        skillInfo += skills.技能 ? `\n**技能**：${skills.技能}` : '\n**技能**：未知';
-        skillInfo += skills.彩技 ? `\n**彩技**：${skills.彩技}` : '\n**彩技**：未知';
-        skillInfo += skills.聯動 ? `\n**聯動**：${skills.聯動}` : '\n**聯動**：未知';
-        skillInfo += skills.備註 ? `\n**備註**：${skills.備註}` : '\n**備註**：未知';
-      } else {
-        // 不存在指定角色和造型的技能資料，全部顯示未知
-        skillInfo += '\n**特色**：未知';
-        skillInfo += '\n**技能**：未知';
-        skillInfo += '\n**彩技**：未知';
-        skillInfo += '\n**聯動**：未知';
-        skillInfo += '\n**備註**：未知';
-      }
-      
-      // 獲取角色對應的顏色
-      const colorHex = styleData.顏色 || '#3498db';
-      const colorDec = parseInt(colorHex.replace('#', ''), 16);
-      
-      // 使用Discord內嵌訊息功能，創建帶有垂直色條的效果
-      const embed = {
-        color: colorDec,
-        title: `${name} - ${style}`,
-        description: `${name}一 ${style}造型\n\n**推出時間**    **稱號**\n${styleData.推出時間}    ${styleData.稱號}${styleData.備註 ? '\n\n*' + styleData.備註 + '*' : ''}${skillInfo}`
-      };
-      
-      // 使用embed回應，這會創建左側帶有顏色條的訊息
-      await interaction.reply({ 
-        content: `${interaction.user} 已使用 角色`,
-        embeds: [embed]
+      skillInfo += skills.特色 ? `\n**特色**：${skills.特色}` : '\n**特色**：未知';
+      skillInfo += skills.技能 ? `\n**技能**：${skills.技能}` : '\n**技能**：未知';
+      skillInfo += skills.彩技 ? `\n**彩技**：${skills.彩技}` : '\n**彩技**：未知';
+      skillInfo += skills.聯動 ? `\n**聯動**：${skills.聯動}` : '\n**聯動**：未知';
+      skillInfo += skills.備註 ? `\n**備註**：${skills.備註}` : '\n**備註**：未知';
+    } else {
+      // 不存在指定角色和造型的技能資料，全部顯示未知
+      skillInfo += '\n**特色**：未知';
+      skillInfo += '\n**技能**：未知';
+      skillInfo += '\n**彩技**：未知';
+      skillInfo += '\n**聯動**：未知';
+      skillInfo += '\n**備註**：未知';
+    }
+    
+    // 獲取角色對應的顏色
+    const colorHex = styleData.顏色 || '#3498db';
+    const colorDec = parseInt(colorHex.replace('#', ''), 16);
+    
+    // 使用Discord內嵌訊息功能，創建帶有垂直色條的效果
+    const embed = {
+      color: colorDec,
+      title: `${name} - ${style}`,
+      description: `${name} - ${style}造型\n\n**推出時間**    **稱號**\n${styleData.推出時間}    ${styleData.稱號}${styleData.備註 ? '\n\n*' + styleData.備註 + '*' : ''}${skillInfo}`
+    };
+    
+    // 使用embed回應，這會創建左側帶有顏色條的訊息
+    await interaction.editReply({
+      content: `${interaction.user} 已使用 角色`,
+      embeds: [embed]
+    });
+  } catch (error) {
+    console.error(`❌ 角色指令錯誤:`, error);
+    
+    // 檢查是否已經回覆過或是否是互動超時
+    if (error.code === 10062) {
+      console.log('互動已經過期，無法回應');
+      return;
+    }
+    
+    // 嘗試使用編輯回覆（如果已經延遲回覆）
+    try {
+      await interaction.editReply({
+        content: '❌ 指令執行發生錯誤，請稍後再試。',
+        ephemeral: true
       });
-    } catch (error) {
-      console.error(`❌ 角色指令錯誤:`, error);
-      if (error.code !== 10062) {
-        await interaction.followUp({ 
-          content: '❌ 指令執行發生錯誤，請稍後再試。', 
-          ephemeral: true 
-        }).catch(() => {});
+    } catch (followUpError) {
+      // 如果編輯回覆失敗，嘗試使用followUp
+      try {
+        await interaction.followUp({
+          content: '❌ 指令執行發生錯誤，請稍後再試。',
+          ephemeral: true
+        });
+      } catch (finalError) {
+        console.error('無法回應互動:', finalError);
       }
     }
-  },
+  }
+},
   
   '查教練': async (interaction) => {
     try {
