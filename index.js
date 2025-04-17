@@ -388,12 +388,14 @@ const commandHandlers = {
         skillInfo += skills.技能 ? `\n**技能**：${skills.技能}` : '\n**技能**：未知';
         skillInfo += skills.彩技 ? `\n**彩技**：${skills.彩技}` : '\n**彩技**：未知';
         skillInfo += skills.聯動 ? `\n**聯動**：${skills.聯動}` : '\n**聯動**：未知';
+        skillInfo += skills.備註 ? `\n**備註**：${skills.備註}` : '\n**備註**：未知';
       } else {
         // 不存在指定角色和造型的技能資料，全部顯示未知
         skillInfo += '\n**特色**：未知';
         skillInfo += '\n**技能**：未知';
         skillInfo += '\n**彩技**：未知';
         skillInfo += '\n**聯動**：未知';
+        skillInfo += '\n**備註**：未知';
       }
       
       // 獲取角色對應的顏色
