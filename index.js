@@ -379,7 +379,7 @@ const commandHandlers = {
     // 獲取角色造型資料
     const styleData = charactersData[name].資料[style];
     
-    // 查找技能資料
+    // 修改：查找技能資料並只顯示有資料的欄位
     let skillInfo = "";
     
     // 檢查是否存在技能資料
@@ -387,18 +387,25 @@ const commandHandlers = {
       // 存在指定角色和造型的技能資料
       const skills = characterSkillsData[name][style];
       
-      skillInfo += skills.特色 ? `\n**特色**：${skills.特色}` : '\n**特色**：未知';
-      skillInfo += skills.技能 ? `\n**技能**：${skills.技能}` : '\n**技能**：未知';
-      skillInfo += skills.彩技 ? `\n**彩技**：${skills.彩技}` : '\n**彩技**：未知';
-      skillInfo += skills.聯動 ? `\n**聯動**：${skills.聯動}` : '\n**聯動**：未知';
-      skillInfo += skills.備註 ? `\n**備註**：${skills.備註}` : '\n**備註**：未知';
-    } else {
-      // 不存在指定角色和造型的技能資料，全部顯示未知
-      skillInfo += '\n**特色**：未知';
-      skillInfo += '\n**技能**：未知';
-      skillInfo += '\n**彩技**：未知';
-      skillInfo += '\n**聯動**：未知';
-      skillInfo += '\n**備註**：未知';
+      // 只顯示有資料的欄位 - 根據所有可能的欄位
+      if (skills.時間) skillInfo += `\n**時間**：${skills.時間}`;
+      if (skills.稱號) skillInfo += `\n**稱號**：${skills.稱號}`;
+      if (skills.特色) skillInfo += `\n**特色**：${skills.特色}`;
+      if (skills.特色技能) skillInfo += `\n**特色技能**：${skills.特色技能}`;
+      if (skills.技能) skillInfo += `\n**技能**：${skills.技能}`;
+      if (skills.其他技能) skillInfo += `\n**其他技能**：${skills.其他技能}`;
+      if (skills.彩技) skillInfo += `\n**彩技**：${skills.彩技}`;
+      if (skills.聯動) skillInfo += `\n**聯動**：${skills.聯動}`;
+      if (skills.聯動１) skillInfo += `\n**聯動１**：${skills.聯動１}`;
+      if (skills.聯動２) skillInfo += `\n**聯動２**：${skills.聯動２}`;
+      if (skills.聯動３) skillInfo += `\n**聯動３**：${skills.聯動３}`;
+      if (skills.Buff || skills.BUFF || skills.buff) {
+        const buffValue = skills.Buff || skills.BUFF || skills.buff;
+        skillInfo += `\n**Buff**：${buffValue}`;
+      }
+      if (skills.增益) skillInfo += `\n**增益**：${skills.增益}`;
+      if (skills.替代) skillInfo += `\n**替代**：${skills.替代}`;
+      if (skills.備註) skillInfo += `\n**備註**：${skills.備註}`;
     }
     
     // 獲取角色對應的顏色
