@@ -387,23 +387,19 @@ const commandHandlers = {
       // 存在指定角色和造型的技能資料
       const skills = characterSkillsData[name][style];
       
-      // 只顯示有資料的欄位 - 根據所有可能的欄位
+      // 只顯示有資料的欄位 - 根據新的欄位列表
       if (skills.時間) skillInfo += `\n**時間**：${skills.時間}`;
       if (skills.稱號) skillInfo += `\n**稱號**：${skills.稱號}`;
-      if (skills.特色) skillInfo += `\n**特色**：${skills.特色}`;
-      if (skills.特色技能) skillInfo += `\n**特色技能**：${skills.特色技能}`;
-      if (skills.技能) skillInfo += `\n**技能**：${skills.技能}`;
+      if (skills.角色特點) skillInfo += `\n**角色特點**：${skills.角色特點}`;
       if (skills.其他技能) skillInfo += `\n**其他技能**：${skills.其他技能}`;
-      if (skills.彩技) skillInfo += `\n**彩技**：${skills.彩技}`;
-      if (skills.聯動) skillInfo += `\n**聯動**：${skills.聯動}`;
-      if (skills.聯動１) skillInfo += `\n**聯動１**：${skills.聯動１}`;
-      if (skills.聯動２) skillInfo += `\n**聯動２**：${skills.聯動２}`;
-      if (skills.聯動３) skillInfo += `\n**聯動３**：${skills.聯動３}`;
+      if (skills.特殊１) skillInfo += `\n**特殊１**：${skills.特殊１}`;
+      if (skills.特殊２) skillInfo += `\n**特殊２**：${skills.特殊２}`;
+      if (skills.特殊３) skillInfo += `\n**特殊３**：${skills.特殊３}`;
+      if (skills.特殊４) skillInfo += `\n**特殊４**：${skills.特殊４}`;
       if (skills.Buff || skills.BUFF || skills.buff) {
         const buffValue = skills.Buff || skills.BUFF || skills.buff;
         skillInfo += `\n**Buff**：${buffValue}`;
       }
-      if (skills.增益) skillInfo += `\n**增益**：${skills.增益}`;
       if (skills.替代) skillInfo += `\n**替代**：${skills.替代}`;
       if (skills.備註) skillInfo += `\n**備註**：${skills.備註}`;
     }
