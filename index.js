@@ -284,7 +284,7 @@ const commandHandlers = {
       const result = attributeData[attr];
       
       if (result?.length) {
-        await interaction.reply(`🔍 **${attr}** 屬性的教練：\n\n${result.join('\n')}`);
+        await interaction.reply(`🔍 **${attr}** 屬性的教練：\n${result.join('\n')}`);
       } else {
         await interaction.reply(`❌ 沒有找到屬性「${attr}」對應的教練。`);
       }
