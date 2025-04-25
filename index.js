@@ -412,7 +412,7 @@ const commandHandlers = {
     const embed = {
       color: colorDec,
       title: `${name} - ${style}`,
-      description: `${style}造型\n\n}${skillInfo}`
+      description: `${style}造型\n\n${skillInfo}`
     };
     
     // 使用embed回應，這會創建左側帶有顏色條的訊息
