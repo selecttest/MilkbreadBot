@@ -647,7 +647,8 @@ async function registerCommands() {
     console.log('📡 正在註冊斜線指令...');
     const rest = new REST({ version: '10' }).setToken(token);
     await rest.put(
-      Routes.applicationGuildCommands(clientId),
+      //Routes.applicationGuildCommands(clientId),
+      Routes.applicationCommands(clientId),
       { body: commands }
     );
     console.log('✅ 斜線指令註冊成功！');
